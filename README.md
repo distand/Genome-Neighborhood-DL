@@ -11,7 +11,7 @@
 
 ## Param
 - url: full link like https://efi.igb.illinois.edu/efi-gnt/view_diagrams.php?gnn-id=xx&key=xx
-- query number[default:1]: the cluster number.
+- query number or range[1 or 1-10, default:1]: the cluster number.
 ![image](https://user-images.githubusercontent.com/17464561/225482825-a06be2de-8ebb-4c26-a544-b1cc8680757a.png)
 - window size[default:10]: genome neighborhood window.
 ![image](https://user-images.githubusercontent.com/17464561/225483033-66a37fb1-a03d-410a-b53c-801e79eeb050.png)
