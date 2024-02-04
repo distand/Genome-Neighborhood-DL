@@ -21,12 +21,14 @@ p1 = 'https://rest.uniprot.org/uniprotkb/%s'
 p2 = 'https://www.ncbi.nlm.nih.gov/nuccore/%s'
 p3 = 'https://www.ncbi.nlm.nih.gov/sviewer/viewer.fcgi?id=%s&db=nuccore&report=genbank&conwithfeat=on&basic_feat=on&hide-sequence=off&hide-cdd=on&from=%d&to=%d&retmode=genebank&withmarkup=on&tool=portal'
 url = ''
-window = 10
-query_start = 1
+window = 10  # number of neighbors
+limit = 0  # Keep n rows of results
+offset = 0  # Select a sequence at a specific position
+query_start = 1  # multiple clusters and/or individual UniProt IDs.
 query_end = 1
-skip = 0
+skip = 0  # skip top n
 params = {}
-dw = False
+dw = False  # Whether to download files
 
 
 def main():
@@ -53,19 +55,21 @@ def main():
         if m['error']:
             print('Query(%d) Step(2) failed: %s.' % (query, res))
             continue
-        if m['stats']['num_checked'] == 0:
+        if m['stats']['num_checked'] == 0:  # result rows num
             print('Query(%d) Step(2) failed: no item.' % query)
             continue
         print('Ok.')
         print('Step 3: query page...')
-        min = m['stats']['index_range'][0][0]
-        max = m['stats']['index_range'][0][-1]
+        min_n = m['stats']['index_range'][0][0]
+        max_n = m['stats']['index_range'][0][-1]
+        if 0 < limit < max_n:
+            max_n = limit - 1
         scale_factor = m['stats']['scale_factor']
         arr = []
         items = []
-        for i in tqdm(range(min, max + 1)):
+        for i in tqdm(range(min_n, max_n + 1)):
             arr.append(i)
-            if len(arr) == 10 or i == max:
+            if len(arr) == 10 or i == max_n:
                 res = get(u2 % (gnn_id, gnn_key, window, scale_factor, arr[0], arr[-1]))
                 if res == '':
                     print('Query(%d) Step(3) failed.' % query)
@@ -89,6 +93,9 @@ def main():
                 print('[%d] skip.' % n)
                 continue
             t = v['attributes']
+            if offset != 0:
+                t = v['neighbors'][offset + window]
+                t['organism'] = ''  # neighbors don't have organism
             ed = '' if dw else '\n'
             print('[%d] %s %s %s...' % (n, t['accession'], t['id'], t['organism']), end=ed, flush=True)
             res = get(p1 % t['accession'])
@@ -96,6 +103,9 @@ def main():
                 print('[%d] failed.' % n)
                 continue
             m = json.loads(res)
+            if m['entryType'] == 'Inactive':
+                print('[%d] Inactive: %s' % (n, m['inactiveReason']['inactiveReasonType']))
+                continue
             name = m['organism']['scientificName']
             name = name.replace('/', ' ')
             txt = '> %s %s\n%s\n' % (t['accession'], m['organism']['scientificName'], m['sequence']['value'])
@@ -128,15 +138,10 @@ def main():
         fo.close()
         print('Query(%d) done.' % query)
     print('All done, have a nice day!')
-    n = 5
-    while n >= 0:
-        time.sleep(1)
-        print('%d' % n)
-        n -= 1
 
 
 def init():
-    global url, query_start, query_end, window, params, skip, dw
+    global url, query_start, query_end, window, params, skip, dw, limit, offset
     while url == '':
         url = input('Input url: ')
     q = input('Input query number or range [1 or 1-10, default: 1]: ')
@@ -158,6 +163,24 @@ def init():
             window = int(window)
         except ValueError:
             window = 10
+    offset = input('Input offset num [-1 or 1, default: 0]: ')
+    if offset == '':
+        offset = 0
+    else:
+        try:
+            offset = int(offset)
+            if abs(offset) > window:
+                offset = 0
+        except ValueError:
+            offset = 0
+    limit = input('Input limit num [default: unlimited]: ')
+    if limit == '':
+        limit = 0
+    else:
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 0
     # skip = input('Input a skip number if you want: ')
     # if skip == '':
     #     skip = 0

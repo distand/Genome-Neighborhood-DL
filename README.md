@@ -16,3 +16,5 @@
 - window size[default:10]: genome neighborhood window.
 ![image](https://user-images.githubusercontent.com/17464561/225483033-66a37fb1-a03d-410a-b53c-801e79eeb050.png)
 - download[default:n]: auto download gb file or not.
+- limit[default:0]  # Keep n rows of results default not limit
+- offset[default:0]  # Select a sequence at a specific position, abs(offset) <= window
