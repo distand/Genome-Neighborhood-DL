@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 import json
 import os.path
-import time
+import sys
 
 import requests
 from bs4 import BeautifulSoup
@@ -138,6 +138,7 @@ def main():
         fo.close()
         print('Query(%d) done.' % query)
     print('All done, have a nice day!')
+    sys.exit(0)
 
 
 def init():
